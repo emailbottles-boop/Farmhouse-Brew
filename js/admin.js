@@ -12,6 +12,16 @@
 import { firebaseConfig } from './firebase-config.js';
 import { CATEGORY_ORDER, DAY_LABELS, escapeHtml } from './utils.js';
 
+// Login is password-only in the UI — this fixed address is the account's
+// real identity behind the scenes, matching the bootstrap email in
+// firestore.rules. The owner never sees or types it.
+// REPLACE-BEFORE-LAUNCH: placeholder only — swap alongside firestore.rules.
+const ADMIN_LOGIN_EMAIL = 'owner@example.com';
+
+// Data URLs count toward Firestore's 1 MB document limit. Compressed
+// photos land well under this in practice; this is a hard backstop.
+const MAX_PHOTO_CHARS = 700000;
+
 let fbPromise = null;
 function getFirebase() {
   if (!fbPromise) {
@@ -46,7 +56,7 @@ function showScreen(name) {
 function describeAuthError(err) {
   const code = err && err.code;
   if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
-    return "That email and password combination isn't correct (auth/invalid-credential). Double-check for typos, or ask whoever manages Firebase for a Console password reset.";
+    return "That password isn't correct (auth/invalid-credential). Ask whoever manages Firebase for a Console password reset if you're stuck.";
   }
   if (code === 'auth/too-many-requests') {
     return 'Too many attempts — wait a few minutes and try again (auth/too-many-requests).';
@@ -64,14 +74,13 @@ async function handleLogin(event) {
   event.preventDefault();
   const statusEl = document.getElementById('auth-status');
   statusEl.hidden = true;
-  const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   const submitBtn = document.getElementById('login-submit');
   submitBtn.disabled = true;
   submitBtn.textContent = 'Logging in…';
   try {
     const { authMod, auth } = await getFirebase();
-    await authMod.signInWithEmailAndPassword(auth, email, password);
+    await authMod.signInWithEmailAndPassword(auth, ADMIN_LOGIN_EMAIL, password);
   } catch (err) {
     statusEl.textContent = describeAuthError(err);
     statusEl.hidden = false;
@@ -190,14 +199,66 @@ function categoryOptions(selected) {
   ).join('');
 }
 
+// Firebase Storage is off-limits on the free plan, so photos are compressed
+// client-side and stored as a data URL right on the menu document.
+function compressImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Couldn't read that file"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("That doesn't look like a valid image"));
+      img.onload = () => {
+        const maxEdge = 1000;
+        let { width, height } = img;
+        if (width > maxEdge || height > maxEdge) {
+          if (width >= height) {
+            height = Math.round(height * (maxEdge / width));
+            width = maxEdge;
+          } else {
+            width = Math.round(width * (maxEdge / height));
+            height = maxEdge;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function readAndValidatePhoto(fileInput) {
+  const file = fileInput.files[0];
+  if (!file) return undefined;
+  const dataUrl = await compressImageFile(file);
+  if (dataUrl.length > MAX_PHOTO_CHARS) {
+    throw new Error('That photo is too large even after compression — try a simpler image.');
+  }
+  return dataUrl;
+}
+
 function renderMenuCard(item) {
   const id = escapeHtml(item.id);
+  const photoPreview = item.photo
+    ? `<img src="${escapeHtml(item.photo)}" alt="${escapeHtml(item.name || 'Menu item photo')}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;margin-bottom:0.75rem;">`
+    : '';
+  const removePhotoField = item.photo
+    ? '<div class="field"><label><input type="checkbox" class="mc-remove-photo" style="width:auto;display:inline-block;margin-right:0.5rem;"> Remove current photo</label></div>'
+    : '';
   return `<div class="admin-card" data-id="${id}">
+    ${photoPreview}
     <div class="field"><label>Name</label><input type="text" class="mc-name" maxlength="60" value="${escapeHtml(item.name || '')}"></div>
     <div class="field"><label>Description</label><input type="text" class="mc-desc" maxlength="160" value="${escapeHtml(item.description || '')}"></div>
     <div class="field"><label>Price</label><input type="text" class="mc-price" maxlength="20" value="${escapeHtml(item.price || '')}"></div>
     <div class="field"><label>Category</label><select class="mc-category">${categoryOptions(item.category)}</select></div>
     <div class="field"><label>Sort order <span class="field-hint">(lower shows first)</span></label><input type="number" class="mc-order" value="${Number(item.order) || 0}"></div>
+    <div class="field"><label>${item.photo ? 'Replace photo' : 'Add photo'} <span class="field-hint">(optional)</span></label><input type="file" class="mc-photo" accept="image/*"></div>
+    ${removePhotoField}
     <div class="field"><label><input type="checkbox" class="mc-active" style="width:auto;display:inline-block;margin-right:0.5rem;" ${item.active !== false ? 'checked' : ''}> Visible on site</label></div>
     <div class="admin-card-actions">
       <button type="button" class="btn btn-sm btn-primary mc-save">Save</button>
@@ -217,19 +278,38 @@ function wireMenuCard(id) {
     const category = card.querySelector('.mc-category').value;
     const order = Number(card.querySelector('.mc-order').value) || 0;
     const active = card.querySelector('.mc-active').checked;
+    const photoInput = card.querySelector('.mc-photo');
+    const removePhotoBox = card.querySelector('.mc-remove-photo');
     if (!name || !price) { showToast('Name and price are required.', true); return; }
+
+    const updates = {
+      name: name.slice(0, 60),
+      description: description.slice(0, 160),
+      price: price.slice(0, 20),
+      category,
+      order,
+      active
+    };
+
+    try {
+      const photo = await readAndValidatePhoto(photoInput);
+      if (photo) {
+        updates.photo = photo;
+      } else if (removePhotoBox && removePhotoBox.checked) {
+        const { firestore } = await getFirebase();
+        updates.photo = firestore.deleteField();
+      }
+    } catch (err) {
+      showToast(err.message, true);
+      return;
+    }
+
     try {
       const { firestore, db } = await getFirebase();
       const { doc, updateDoc } = firestore;
-      await updateDoc(doc(db, 'menu', id), {
-        name: name.slice(0, 60),
-        description: description.slice(0, 160),
-        price: price.slice(0, 20),
-        category,
-        order,
-        active
-      });
+      await updateDoc(doc(db, 'menu', id), updates);
       showToast('Saved.');
+      loadMenuAdmin();
     } catch (err) {
       showToast(`Couldn't save (${err.code || err.message}).`, true);
     }
@@ -280,17 +360,28 @@ function wireMenuTab() {
     const price = document.getElementById('mf-price').value.trim();
     const category = document.getElementById('mf-category').value;
     if (!name || !price) { showToast('Item name and price are required.', true); return; }
+
+    const payload = {
+      name: name.slice(0, 60),
+      description: description.slice(0, 160),
+      price: price.slice(0, 20),
+      category,
+      order: Date.now(),
+      active: true
+    };
+
+    try {
+      const photo = await readAndValidatePhoto(document.getElementById('mf-photo'));
+      if (photo) payload.photo = photo;
+    } catch (err) {
+      showToast(err.message, true);
+      return;
+    }
+
     try {
       const { firestore, db } = await getFirebase();
       const { collection, addDoc } = firestore;
-      await addDoc(collection(db, 'menu'), {
-        name: name.slice(0, 60),
-        description: description.slice(0, 160),
-        price: price.slice(0, 20),
-        category,
-        order: Date.now(),
-        active: true
-      });
+      await addDoc(collection(db, 'menu'), payload);
       document.getElementById('menu-form').reset();
       showToast('Item added.');
       loadMenuAdmin();

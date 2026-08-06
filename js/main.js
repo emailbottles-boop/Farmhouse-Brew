@@ -87,7 +87,11 @@ function renderMenu(items) {
     const groupItems = groups.get(category).sort((a, b) => (a.order || 0) - (b.order || 0));
     html += `<div class="menu-group"><h3>${escapeHtml(category)}</h3><ul class="menu-list">`;
     groupItems.forEach((item) => {
+      const photoHtml = item.photo
+        ? `<img class="menu-item-photo" src="${escapeHtml(item.photo)}" alt="${escapeHtml(item.name || 'Menu item')}" loading="lazy">`
+        : '';
       html += `<li class="menu-item">
+        ${photoHtml}
         <div class="menu-item-text">
           <div class="menu-item-name">${escapeHtml(item.name || '')}</div>
           ${item.description ? `<div class="menu-item-desc">${escapeHtml(item.description)}</div>` : ''}

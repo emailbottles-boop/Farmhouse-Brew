@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=1">
+<link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body class="admin-body">
 <a class="skip-link" href="#main">Skip to content</a>
@@ -26,12 +26,8 @@
     <div id="auth-status" class="status-banner error" role="alert" hidden></div>
     <form id="login-form" novalidate>
       <div class="field">
-        <label for="login-email">Email</label>
-        <input type="email" id="login-email" name="email" autocomplete="username" required>
-      </div>
-      <div class="field">
         <label for="login-password">Password</label>
-        <input type="password" id="login-password" name="password" autocomplete="current-password" required>
+        <input type="password" id="login-password" name="password" autocomplete="current-password" required autofocus>
       </div>
       <button type="submit" class="btn btn-primary btn-block" id="login-submit">Log in</button>
     </form>
@@ -119,6 +115,11 @@
               <option>Non-Coffee</option>
               <option>Extras</option>
             </select>
+          </div>
+          <div class="field">
+            <label for="mf-photo">Photo <span class="field-hint">(optional)</span></label>
+            <input type="file" id="mf-photo" accept="image/*">
+            <p class="field-hint">Compressed automatically to fit — any photo works.</p>
           </div>
           <button type="submit" class="btn btn-primary btn-block">Add item</button>
         </form>

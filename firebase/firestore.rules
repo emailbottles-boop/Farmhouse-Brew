@@ -47,9 +47,15 @@ service cloud.firestore {
     }
 
     // ---- menu: drink/price list ----
+    // photo is an optional data URL (Firebase Storage is off-limits on the
+    // Spark plan, so photos are compressed client-side and stored inline).
+    // Capped well under Firestore's 1 MB document limit as a backstop —
+    // the admin UI already compresses before it ever gets this far.
     match /menu/{itemId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update: if isAdmin()
+        && (!('photo' in request.resource.data) || (request.resource.data.photo is string && request.resource.data.photo.size() < 700000));
+      allow delete: if isAdmin();
     }
 
     // ---- site/hours, site/banner: single-document settings ----

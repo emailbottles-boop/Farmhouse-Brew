@@ -49,6 +49,9 @@ No build step. Open `index.html` in a browser, or serve the folder with any stat
 | category | string | yes | — | admin |
 | order | number | yes | — | admin |
 | active | boolean | yes | — | admin |
+| photo | string (data URL) | no | < 700,000 chars | admin |
+
+`photo` is optional — items with none simply render without a thumbnail. Firebase Storage is off-limits on the Spark plan, so the admin dashboard compresses any uploaded photo in the browser (max ~1000px edge, JPEG) before storing it inline; the rules cap enforces the same limit server-side as a backstop.
 
 **`site/hours`**
 | Field | Type | Required | Who writes |
@@ -97,6 +100,12 @@ Admin access is decided by **email address**, checked two ways, either sufficien
 **Add:** Firebase Console → Firestore Database → start collection `adminEmails` (if it doesn't exist) → new document → **set the Document ID to the exact email address** (e.g. `newperson@gmail.com`) → save with any field (or none) → done. No rules edit needed.
 
 **Remove:** delete that document. If you need to remove the bootstrap owner email itself, that requires editing `firestore.rules` and republishing, since it's hard-coded as the fallback.
+
+### Password-only login
+
+The login screen only asks for a password — no email field. Firebase Authentication still requires an account identity behind the scenes, so `js/admin.js` holds one fixed `ADMIN_LOGIN_EMAIL` constant (matching the bootstrap email in `firestore.rules`) that the page signs in with automatically; the owner never sees or types it. Everything else about the security model is unchanged — that hidden email is still what the rules check against `adminEmails` and the bootstrap fallback.
+
+If you ever add a second real admin with their own login, they'll need their own email typed back into a login form — this password-only shortcut only works cleanly for a single shared account. Re-add the email field to `admin.html`'s login form if that need comes up.
 
 ### Password recovery
 
@@ -148,7 +157,7 @@ Follow these in order with the [Firebase Console](https://console.firebase.googl
 1. **Create project** — Firebase Console → Add project → name it (e.g. "Farmhouse Brew") → disable Google Analytics (not needed) → Create.
 2. **Firestore** — Build → Firestore Database → Create database → **production mode** → choose a location close to Washington State (e.g. `us-west1`) → Enable.
 3. **Email/Password sign-in** — Build → Authentication → Get started → Sign-in method tab → enable **Email/Password** → Save.
-4. **Create the owner's user** — Authentication → Users tab → Add user → enter the owner's real email and a password you set → Add user.
+4. **Create the owner's user** — Authentication → Users tab → Add user → enter the `ADMIN_LOGIN_EMAIL` value from `js/admin.js` (not the owner's personal email — the login screen is password-only, this address never appears in the UI) and a password you set → Add user.
 5. **Publish rules** — Firestore Database → Rules tab → paste in the rules with the **real** owner email (see below, provided separately in chat — never commit the real email) → Publish.
 6. **Register the web app** — Project Settings (gear icon) → General tab → scroll to "Your apps" → click the `</>` web icon → nickname it → **do not** check "Firebase Hosting" → Register app → copy the `firebaseConfig` object shown.
 7. **Authorized domains** — Authentication → Settings tab → Authorized domains → confirm `localhost` and the `*.github.io` domain are listed (GitHub Pages domains are added automatically once you visit the admin page from that URL the first time; add manually here if login fails).
@@ -178,7 +187,7 @@ These values are not secret — they identify the project, not grant access. Acc
 
 | Capability | How to verify |
 |---|---|
-| Menu | Log into `admin.html`, add an item under the Menu tab, then reload `index.html` and confirm it appears under the right category. |
+| Menu | Log into `admin.html`, add an item under the Menu tab (try one with a photo), then reload `index.html` and confirm it appears under the right category with its thumbnail. |
 | Hours | Set the weekly schedule in the Hours tab, save, reload `index.html`, confirm the table matches. Toggle the override on with a message and confirm it appears above the hours table. |
 | Banner | Turn the banner on with a message in the Banner tab, reload any public page, confirm it shows at the top. Turn it off and confirm it disappears. |
 | Contact form | Submit the form on `index.html` with a real-looking name/email/message, then check the Inquiries tab in the dashboard for it. |

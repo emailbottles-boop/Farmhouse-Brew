@@ -324,8 +324,16 @@ select:focus-visible,
 .menu-item {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 1rem;
+}
+
+.menu-item-photo {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 8px;
 }
 
 .menu-item-name {
