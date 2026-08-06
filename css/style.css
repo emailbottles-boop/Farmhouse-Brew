@@ -238,11 +238,13 @@ select:focus-visible,
   margin-top: 1.5rem;
 }
 
-.hero-cup {
-  justify-self: center;
-  width: min(280px, 60vw);
-  height: min(280px, 60vw);
-  margin-inline: auto;
+.hero-photo {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 909 / 700;
+  object-fit: cover;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lift);
 }
 
 /* ---------- Buttons ---------- */
