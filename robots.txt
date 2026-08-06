@@ -1,0 +1,12 @@
+User-agent: *
+
+# DEMO MODE MARKER: this site is not yet approved to appear in search
+# results. Delete the line below (and only that line) — along with the
+# noindex meta tags in every public HTML page — once the owner signs off
+# on going live. Leave the admin.html line in place forever.
+Disallow: /
+
+# admin.html stays disallowed permanently, demo mode or not.
+Disallow: /admin.html
+
+Sitemap: https://emailbottles-boop.github.io/Farmhouse-Brew/sitemap.xml

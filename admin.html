@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard | Farmhouse Brew</title>
+<!-- Admin dashboard: noindex permanently, not just in demo mode. -->
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body class="admin-body">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- ============ SIGNED-OUT / LOGIN SCREEN ============ -->
+<section id="auth-screen" class="auth-screen">
+  <div class="auth-card">
+    <div class="wordmark" style="margin-bottom:1.25rem;">
+      <span class="mark-fallback" aria-hidden="true">FB</span>
+      Farmhouse Brew
+    </div>
+    <h1 style="font-size:1.35rem;">Admin Login</h1>
+    <div id="auth-status" class="status-banner error" role="alert" hidden></div>
+    <form id="login-form" novalidate>
+      <div class="field">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" name="email" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" name="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" id="login-submit">Log in</button>
+    </form>
+    <p class="helper-text" style="margin-top:1rem;">Password issues? Ask whoever manages the Firebase project to reset it from the Console — there's no self-service reset on this page.</p>
+  </div>
+</section>
+
+<!-- ============ NOT AUTHORIZED SCREEN ============ -->
+<section id="unauthorized-screen" class="auth-screen" hidden>
+  <div class="auth-card">
+    <h1 style="font-size:1.35rem;">Not authorized</h1>
+    <p>You're signed in as:</p>
+    <p class="email-chip">
+      <span id="unauth-email">—</span>
+      <button type="button" class="copy-btn" id="unauth-copy">Copy</button>
+    </p>
+    <p class="helper-text">This email isn't on the admin list for Farmhouse Brew. Ask the site owner to add it in the Firebase Console under <strong>adminEmails</strong>, using this exact email as the document ID.</p>
+    <button type="button" class="btn btn-secondary btn-block" id="unauth-signout" style="margin-top:1rem;">Sign out</button>
+  </div>
+</section>
+
+<!-- ============ COULD NOT DETERMINE SCREEN ============ -->
+<section id="unknown-screen" class="auth-screen" hidden>
+  <div class="auth-card">
+    <h1 style="font-size:1.35rem;">Couldn't check access</h1>
+    <p>We couldn't confirm whether this account is authorized — this is different from "not authorized." It usually means the security rules aren't published yet, or the connection to Firebase failed.</p>
+    <div id="unknown-error" class="status-banner warn" style="margin-top:0.75rem;"></div>
+    <p>Signed in as:</p>
+    <p class="email-chip">
+      <span id="unknown-email">—</span>
+      <button type="button" class="copy-btn" id="unknown-copy">Copy</button>
+    </p>
+    <button type="button" class="btn btn-primary btn-block" id="unknown-retry" style="margin-top:1rem;">Try again</button>
+    <button type="button" class="btn btn-secondary btn-block" id="unknown-signout" style="margin-top:0.5rem;">Sign out</button>
+  </div>
+</section>
+
+<!-- ============ AUTHORIZED DASHBOARD ============ -->
+<div id="dashboard" hidden>
+  <header class="admin-header">
+    <div class="wordmark">
+      <span class="mark-fallback" aria-hidden="true">FB</span>
+      Farmhouse Brew Admin
+    </div>
+    <div class="admin-account">
+      <span id="dash-email" class="email-chip">—</span>
+      <button type="button" class="btn btn-sm btn-ghost" id="dash-signout">Sign out</button>
+    </div>
+  </header>
+
+  <main id="main" class="admin-shell">
+    <div id="save-toast" class="status-banner success" role="status" hidden></div>
+
+    <div class="tabs" role="tablist" aria-label="Dashboard sections">
+      <button class="tab-btn" role="tab" id="tab-btn-menu" aria-controls="tab-menu" aria-selected="true">Menu</button>
+      <button class="tab-btn" role="tab" id="tab-btn-hours" aria-controls="tab-hours" aria-selected="false">Hours</button>
+      <button class="tab-btn" role="tab" id="tab-btn-banner" aria-controls="tab-banner" aria-selected="false">Banner</button>
+      <button class="tab-btn" role="tab" id="tab-btn-inquiries" aria-controls="tab-inquiries" aria-selected="false">Inquiries</button>
+    </div>
+
+    <!-- MENU TAB -->
+    <section id="tab-menu" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-menu">
+      <div class="admin-panel">
+        <h2>Add a menu item</h2>
+        <form id="menu-form">
+          <div class="field">
+            <label for="mf-name">Item name</label>
+            <input type="text" id="mf-name" maxlength="60" required>
+          </div>
+          <div class="field">
+            <label for="mf-desc">Description <span class="field-hint">(optional)</span></label>
+            <input type="text" id="mf-desc" maxlength="160">
+          </div>
+          <div class="field">
+            <label for="mf-price">Price <span class="field-hint">e.g. "4.25" or "4.25 / 4.75"</span></label>
+            <input type="text" id="mf-price" maxlength="20" required>
+          </div>
+          <div class="field">
+            <label for="mf-category">Category</label>
+            <select id="mf-category">
+              <option>Espresso</option>
+              <option>Brewed Coffee</option>
+              <option>Tea</option>
+              <option>Specialty &amp; Seasonal</option>
+              <option>Non-Coffee</option>
+              <option>Extras</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Add item</button>
+        </form>
+      </div>
+      <div class="admin-panel">
+        <h2>Current menu</h2>
+        <div id="menu-admin-list"><p class="helper-text">Loading…</p></div>
+      </div>
+    </section>
+
+    <!-- HOURS TAB -->
+    <section id="tab-hours" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-hours" hidden>
+      <div class="admin-panel">
+        <h2>Weekly hours</h2>
+        <form id="hours-form">
+          <div id="hours-editor"><p class="helper-text">Loading…</p></div>
+          <hr style="border:none;border-top:1px solid var(--border);margin:1.25rem 0;">
+          <h3>Holiday / seasonal override</h3>
+          <div class="field">
+            <label for="hf-override-active">
+              <input type="checkbox" id="hf-override-active" style="width:auto;display:inline-block;margin-right:0.5rem;">
+              Override is currently active
+            </label>
+          </div>
+          <div class="field">
+            <label for="hf-override-message">Message shown to customers</label>
+            <input type="text" id="hf-override-message" maxlength="200" placeholder="Closed Aug 10 for a private event — back Aug 11 at 5:30am">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Save hours</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- BANNER TAB -->
+    <section id="tab-banner" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-banner" hidden>
+      <div class="admin-panel">
+        <h2>Site-wide banner</h2>
+        <p class="helper-text">Shows at the top of every page. Use it for closures, weather delays, or short announcements.</p>
+        <form id="banner-form">
+          <div class="field">
+            <label for="bf-active">
+              <input type="checkbox" id="bf-active" style="width:auto;display:inline-block;margin-right:0.5rem;">
+              Banner is currently active
+            </label>
+          </div>
+          <div class="field">
+            <label for="bf-message">Message</label>
+            <input type="text" id="bf-message" maxlength="200" placeholder="Closed today for weather — see you tomorrow!">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Save banner</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- INQUIRIES TAB -->
+    <section id="tab-inquiries" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-inquiries" hidden>
+      <div class="admin-panel">
+        <h2>Contact form messages</h2>
+        <div id="inquiries-list"><p class="helper-text">Loading…</p></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>

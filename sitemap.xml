@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Points at the current live URL (GitHub Pages). Update these <loc> values
+     in one pass if a real domain is purchased later. admin.html is
+     intentionally excluded — it's not a public page. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://emailbottles-boop.github.io/Farmhouse-Brew/</loc>
+  </url>
+  <url>
+    <loc>https://emailbottles-boop.github.io/Farmhouse-Brew/privacy.html</loc>
+  </url>
+</urlset>
