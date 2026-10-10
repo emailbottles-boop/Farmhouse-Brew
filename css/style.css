@@ -244,7 +244,7 @@ select:focus-visible,
   aspect-ratio: 909 / 700;
   object-fit: cover;
   border-radius: var(--radius);
-  box-shadow: var(--shadow-lift);
+  box-shadow: none;
 }
 
 /* ---------- Buttons ---------- */
@@ -254,11 +254,11 @@ select:focus-visible,
   justify-content: center;
   gap: 0.5rem;
   padding: 0.8rem 1.5rem;
-  border-radius: 999px;
+  border-radius: 4px;
   font-weight: 700;
   font-size: 1rem;
   text-decoration: none;
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   cursor: pointer;
   transition: transform var(--transition), background var(--transition), box-shadow var(--transition);
   font-family: var(--font-body);
@@ -559,7 +559,7 @@ select:focus-visible,
 .admin-panel {
   background: var(--white);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: none;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
 }
@@ -616,7 +616,7 @@ select:focus-visible,
 .btn-sm {
   padding: 0.45rem 0.9rem;
   font-size: 0.85rem;
-  border-radius: 999px;
+  border-radius: 4px;
 }
 
 .btn-danger {
@@ -664,7 +664,7 @@ select:focus-visible,
 .auth-card {
   background: var(--white);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-lift);
+  box-shadow: none;
   padding: 2rem;
   width: 100%;
   max-width: 380px;
