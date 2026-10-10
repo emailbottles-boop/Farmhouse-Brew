@@ -218,10 +218,10 @@ select:focus-visible,
 .hero-eyebrow {
   display: inline-block;
   color: var(--forest);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 1rem;
   margin-bottom: 0.75rem;
 }
 
@@ -377,8 +377,8 @@ select:focus-visible,
 
 .hours-card, .location-card {
   background: var(--white);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border-radius: 4px;
+  box-shadow: none;
   padding: 1.75rem;
 }
 
@@ -711,7 +711,7 @@ select:focus-visible,
   .hero .container {
     grid-template-columns: 1.1fr 0.9fr;
   }
-  .hero-eyebrow, .hero p.lede { margin-inline: 0; }
+  .hero-eyebrow, .hero p.lede { margin-inline: 0; text-transform: none; letter-spacing: 0; font-size: 1rem; font-weight: 600; }
 }
 
 @media (max-width: 759px) {
